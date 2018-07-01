@@ -13,10 +13,13 @@ type Tree struct {
 }
 
 // BuildCodebook from Hoffman tree
-func BuildCodebook(hoffman *Tree, stream Bitstream, book map[rune]Bitstream) {
+func BuildCodebook(hoffman *Tree, stream *Bitstream, book map[rune]Bitstream) {
 	// Check if we have arrived at a rune.
 	if hoffman.val != 0xFFFF {
-		book[hoffman.val] = stream
+		var cpy Bitstream
+		copy(stream.Bits, cpy.Bits)
+		cpy.BitCount = stream.BitCount
+		book[hoffman.val] = cpy
 		return
 	}
 
@@ -98,7 +101,7 @@ func BuildHoffmanTree(msg string) (Tree, map[rune]Bitstream) {
 
 	// Build the codebook for decoding
 	codebook := make(map[rune]Bitstream)
-	BuildCodebook(&treeList[0], Bitstream{}, codebook)
+	BuildCodebook(&treeList[0], &Bitstream{}, codebook)
 
 	return treeList[0], codebook
 
