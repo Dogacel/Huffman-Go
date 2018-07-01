@@ -13,26 +13,30 @@ type Tree struct {
 }
 
 // BuildCodebook from Hoffman tree
-func BuildCodebook(hoffman *Tree, last string, book map[rune]string) {
+func BuildCodebook(hoffman *Tree, stream Bitstream, book map[rune]Bitstream) {
 	// Check if we have arrived at a rune.
 	if hoffman.val != 0xFFFF {
-		book[hoffman.val] = last
+		book[hoffman.val] = stream
 		return
 	}
 
 	// Traverse the left subtree if exists
 	if hoffman.left != nil {
-		BuildCodebook(hoffman.left, last+"0", book)
+		stream.Append(Zero)
+		BuildCodebook(hoffman.left, stream, book)
+		stream.Pop()
 	}
 
 	// Traverse the right subtree if exists.
 	if hoffman.right != nil {
-		BuildCodebook(hoffman.right, last+"1", book)
+		stream.Append(One)
+		BuildCodebook(hoffman.right, stream, book)
+		stream.Pop()
 	}
 }
 
 // BuildHoffmanTree from given string
-func BuildHoffmanTree(msg string) (Tree, map[rune]string) {
+func BuildHoffmanTree(msg string) (Tree, map[rune]Bitstream) {
 	runeMap := make(map[rune]int)
 
 	// Count the rune frequency
@@ -93,30 +97,30 @@ func BuildHoffmanTree(msg string) (Tree, map[rune]string) {
 	}
 
 	// Build the codebook for decoding
-	codebook := make(map[rune]string)
-	BuildCodebook(&treeList[0], "", codebook)
+	codebook := make(map[rune]Bitstream)
+	BuildCodebook(&treeList[0], Bitstream{}, codebook)
 
 	return treeList[0], codebook
 
 }
 
 // HuffmanEncode given string
-func HuffmanEncode(in string) (out string) {
+func HuffmanEncode(in string) (out Bitstream) {
 	_, d := BuildHoffmanTree(in)
 	for _, val := range in {
 		// Concatenate the bitstrings of all runes one by one.
-		out += string(d[val])
+		out.Appends(d[val])
 	}
 
 	return out
 }
 
 // HuffmanDecode given string from the given huffman tree
-func HuffmanDecode(in string, huffman Tree) (out string) {
+func HuffmanDecode(in Bitstream, huffman Tree) (out string) {
 
 	current := huffman
 
-	for _, val := range in {
+	for in.BitCount > 0 {
 
 		// If we hit a rune, append it to the out string and return back to the root node.
 		if current.val != 0xFFFF {
@@ -124,10 +128,12 @@ func HuffmanDecode(in string, huffman Tree) (out string) {
 			current = huffman
 		}
 
-		if val == '0' {
+		val := in.Pop()
+
+		if val == Zero {
 			// Go to the left subtree if next rune is 0
 			current = *current.left
-		} else if val == '1' {
+		} else if val == One {
 			// Go to the right subtree if next rune is 1
 			current = *current.right
 		}

@@ -48,7 +48,7 @@ func dohuf(str string) {
 	}
 
 	firstSize := len(str) * 32
-	endSize := len(dstr)*32 + len(out) - 32
+	endSize := int64(len(dstr))*32 + out.BitCount - 32
 	rate := float64(firstSize) / float64(endSize)
 
 	fmt.Println("First size: ", firstSize)
@@ -59,6 +59,7 @@ func dohuf(str string) {
 func main() {
 	str := " "
 	inputReader := bufio.NewReader(os.Stdin)
+	dohuf("Merhabalar selamlar")
 	for str != "" {
 		str, _ = inputReader.ReadString('\n')
 		dohuf(str)
