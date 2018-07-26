@@ -1,5 +1,9 @@
 package main
 
+import (
+	"fmt"
+)
+
 type Bit bool
 
 const (
@@ -19,14 +23,20 @@ func (b *Bitstream) info() (int64, int64) {
 	return arrPos, arrSize
 }
 
+func NewBitstream() Bitstream {
+	ret := Bitstream{make([]uint64, 1), 0}
+	return ret
+}
+
 func (b *Bitstream) Enlarge() {
 	b.Bits = append(b.Bits, make([]uint64, len(b.Bits)+1)...)
 }
 
 func (b *Bitstream) Append(a Bit) {
 	pos, size := b.info()
-	if len(b.Bits) == int(size) {
+	if len(b.Bits) <= int(size) {
 		b.Enlarge()
+		fmt.Println("expand")
 	}
 
 	if a {
@@ -37,7 +47,8 @@ func (b *Bitstream) Append(a Bit) {
 }
 
 func (b *Bitstream) Appends(a Bitstream) {
-	for i := b.BitCount; i < a.BitCount+b.BitCount; i++ {
+	stopCount := int(a.BitCount + b.BitCount)
+	for i := int(b.BitCount); i < stopCount; i++ {
 		b.Append(a.Pop())
 	}
 }
@@ -45,6 +56,7 @@ func (b *Bitstream) Appends(a Bitstream) {
 func (b *Bitstream) Pop() Bit {
 	pos, size := b.info()
 	if size != 0 || pos != 0 {
+		b.BitCount--
 		if pos == 0 {
 			if (1<<63)&b.Bits[size-1] == 0 {
 				return Zero
@@ -55,7 +67,6 @@ func (b *Bitstream) Pop() Bit {
 				return Zero
 			}
 		}
-		b.BitCount--
 
 		return One
 	}
